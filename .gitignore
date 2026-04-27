@@ -1,7 +1,8 @@
 .venv/
 .env
+.DS_Store
 __pycache__/
 *.pyc
+data/
 output/*.jsonl
 output/*.json
-output/expenses.csv
