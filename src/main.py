@@ -13,7 +13,9 @@ Stages:
 """
 
 import argparse
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Allow running from project root: python src/main.py
@@ -66,10 +68,15 @@ Examples:
         print(f"Error: input file not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
+    # Derive date suffix from input filename (e.g. result_080426.json → 080426)
+    # or fall back to today's date in DDMMYY format.
+    date_match = re.search(r"(\d{6})", input_path.stem)
+    date_suffix = date_match.group(1) if date_match else datetime.now().strftime("%d%m%y")
+
     normalized_path = output_dir / "normalized_messages.jsonl"
     candidates_path = output_dir / "candidate_messages.jsonl"
     extracted_path = output_dir / "extracted_expenses.json"
-    csv_path = output_dir / "expenses.csv"
+    csv_path = output_dir / f"expenses_telegram_{date_suffix}.csv"
     rejected_path = output_dir / "rejected_rows.json"
 
     print("=" * 60)

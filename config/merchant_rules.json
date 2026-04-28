@@ -1,0 +1,49 @@
+{
+  "transport": [
+    "grab car", "grabcar", "grab ride", "grab bike", "grabshuttle", "grab express",
+    "grab", "gojek", "taxi", "mrt", "bus", "komuter", "ktm", "bts",
+    "airasia", "scoot", "singapore airlines", "sia", "jetstar", "tigerair",
+    "transit", "uber", "lyft", "ferry", "tuktuk", "tuk-tuk", "tuk tuk",
+    "train", "skytrain", "subway", "jeepney", "shuttle", "airport transfer",
+    "ezlink", "larryta", "vet bus", "angkor", "transport", "transit",
+    "flight", "airways", "airlines", "rail",
+    "xanhsm", "xanh sm"
+  ],
+  "accomms": [
+    "agoda", "airbnb", "hostel", "hotel", "resort", "inn", "villa",
+    "guesthouse", "motel", "bnb", "lodge", "suites", "accommodation",
+    "onederz", "boutique room", "check-in", "checkin"
+  ],
+  "food": [
+    "grabfood", "foodpanda", "deliveroo", "mcdonalds", "mcdonald", "kfc",
+    "starbucks", "coffee", "bubble tea", "boba", "bakery", "pizza",
+    "sushi", "ramen", "pho", "noodle", "rice", "chicken", "beef", "pork",
+    "seafood", "dessert", "ice cream", "juice", "smoothie", "beer", "wine",
+    "kopitiam", "hawker", "caifan", "cai fan", "restaurant", "cafe",
+    "eatery", "bistro", "diner", "food", "eat", "drink", "snack",
+    "hotdog", "burger", "sandwich", "curry", "lok lak", "cha ca",
+    "passionfruit", "mango", "durian", "lemon tea", "honey coffee",
+    "salt coffee", "egg coffee", "matcha", "cola"
+  ],
+  "entertainment": [
+    "museum", "cinema", "cathay", "shaw", "concert", "klook",
+    "activity", "attraction", "ticket", "theme park", "zoo", "aquarium",
+    "show", "festival", "event", "tour", "gallery", "exhibition",
+    "pottery", "workshop", "marathon", "run", "zootopia", "movie"
+  ],
+  "essentials": [
+    "ntuc", "fairprice", "cold storage", "guardian", "watsons",
+    "pharmacy", "supermarket", "convenience", "7-eleven", "cheers",
+    "sim card", "simcard", "laundry", "haircut", "atm", "clinic",
+    "hospital", "mask", "groceries", "toiletries"
+  ],
+  "souvenirs": [
+    "shopee", "lazada", "zara", "uniqlo", "souvenir", "gift",
+    "market", "craft", "jewellery", "jewelry", "clothing", "shirt",
+    "bag", "north face", "jacket", "shopping"
+  ],
+  "travel": [
+    "trip.com", "expedia", "travel insurance", "insurance",
+    "visa fee", "airfare", "booking.com"
+  ]
+}

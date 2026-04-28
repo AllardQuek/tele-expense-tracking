@@ -246,4 +246,78 @@ My concrete v1 recommendations would be:
 - Manual Notion import first via **Merge with CSV**. [notion](https://www.notion.com/help/import-data-into-notion)
 - Add automated Notion sync only after the CSV is consistently good.
 
+---
+
+## PDF Statement Parsing — Notable Issue: Alternating-Row Table Detection
+
+### Problem
+
+YouTrip PDF statements use a striped table design: every other transaction row has a light grey background, while alternating rows have a white background that matches the page itself.
+
+`pdfplumber`'s table detector works by finding rectangular border lines and fill regions in the PDF's vector graphics layer. It can only identify a cell boundary when there is a visible line or background fill to anchor to.
+
+**White rows have no fill and no unique border lines.** Their top edge is shared with the bottom edge of the shaded row above, and their bottom edge is shared with the top edge of the next shaded row. From pdfplumber's perspective, these rows are indistinguishable from empty page space — they are completely invisible to `extract_tables()`.
+
+**Observed on page 1 (verified via `debug_pdf.py --words`):**
+
+| y-position | Transaction | Detected by pdfplumber? | Row style |
+|---|---|---|---|
+| 304 | 2 Dec SmartExchange™ $18.00 | ✓ Table 0 | Shaded |
+| 355 | 3 Dec SmartExchange™ $17.82 | ✗ Missed | White |
+| 406 | 3 Dec SmartExchange™ $34.74 | ✓ Table 1 | Shaded |
+| 457 | 5 Dec Grab $2.57 | ✗ Missed | White |
+| 522 | 5 Dec Grab $22.76 | ✓ Table 2 | Shaded |
+| 587 | 5 Dec Grab $0.94 | ✗ Missed | White |
+| 653 | 5 Dec SmartExchange™ $5.50 | ✓ Table 3 | Shaded |
+
+Result: `extract_tables()` captures only ~57% of transactions. `extract_table()` (first table only) captures even fewer.
+
+### Secondary Issue: Merchant Name Positioned Above the Date Line
+
+In the raw PDF word layout, the merchant name (e.g. `SmartExchange™`) appears **one PDF unit-row above** the date+amount line. It is a description-column-only word with no corresponding date-column word on the same y-coordinate. A naive block-detection approach that starts each transaction block at the date line will therefore miss the merchant name entirely.
+
+**Example (page 1 raw words):**
+```
+y=298  x=143  "SmartExchange™"       ← desc column only — merchant name
+y=304  x=38   "2 Dec 2025"  x=376 "$18.00"  ← date + amount line
+y=312  x=143  "$18.00 SGD to $13.87 USD"    ← FX detail line
+y=326  x=143  "FX rate: ..."               ← filtered out
+y=349  x=143  "SmartExchange™"       ← merchant name of the NEXT transaction
+y=355  x=38   "3 Dec 2025"  x=376 "$17.82"
+```
+
+The merchant name for transaction N appears as the last word-line inside transaction N-1's y-range.
+
+### Solution: Word-Level Extraction with Look-Behind Block Detection
+
+Instead of relying on table detection, `_parse_youtrip` reads all words via `page.extract_words()` and reconstructs transactions by:
+
+1. Grouping words into horizontal lines by y-position (±3pt tolerance).
+2. Identifying transaction block boundaries: a line containing a date-pattern word (`\d{1,2} Mon YYYY`) in the date column (x < 110).
+3. **Look-behind for merchant name:** when a new date line is found, check if the *last line of the current block* is a description-only line (no date-column words, not an FX-rate line). If so, that line belongs to the *new* block as its merchant name — pop it before closing the current block.
+4. Bucketing words by x-coordinate into date / description / amount / balance columns.
+5. Stripping FX-rate lines from descriptions.
+6. Skipping Top Up rows and Refund rows; cancelling the matching original expense by transaction code.
+
+### Debugging
+
+Use `debug_pdf.py` to investigate any parsing discrepancy:
+
+```bash
+# Compare table detection vs raw word positions
+python src/debug_pdf.py --input data/YouTrip_SGD-Statement_1-Dec-2025_to_31-Dec-2025.pdf \
+  --pages 1-3 --text-only --words
+
+# Key things to check:
+# - "N table(s) detected" vs count of date-line words in raw output
+# - x-coordinates of date / description / amount columns (may differ for other statement versions)
+# - Whether merchant name appears above or inside the date line's y-range
+```
+
+### Considerations for Other Statement Types
+
+- **UOB statements** use a different layout and may not have the alternating-row shading problem — verify with `debug_pdf.py --words` before assuming table detection works.
+- If YouTrip changes their PDF template (different column x-positions, different shading pattern), the x-coordinate constants in `_parse_youtrip` will need recalibration. They are defined at the top of the function and documented with their empirical values.
+- The look-behind merchant name fix assumes the merchant name always appears immediately before its date line with no intervening non-FX description lines. If this assumption breaks on a future statement version, run `--words` to re-verify the layout.
+
 If you want, I can turn this into a more actionable implementation spec next: exact prompt, JSON schema, validation rules, and a folder-by-folder build order.
