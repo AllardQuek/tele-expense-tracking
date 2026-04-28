@@ -209,7 +209,7 @@ def extract_expenses(
     # Clean up checkpoint on successful completion
     if checkpoint_path.exists():
         checkpoint_path.unlink()
-        print(f"  [extract] Checkpoint cleared.")
+        print("  [extract] Checkpoint cleared.")
 
     return total_expenses
 

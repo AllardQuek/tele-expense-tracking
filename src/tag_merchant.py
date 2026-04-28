@@ -64,13 +64,12 @@ def _load_model():
     except Exception as e:
         # Network, SSL, or other download errors — return None to skip semantic tagging
         print(f"    [warning] could not load semantic model ({type(e).__name__}: {str(e)[:80]}...)")
-        print(f"    [warning] skipping semantic tagging pass, using keyword rules only")
+        print("    [warning] skipping semantic tagging pass, using keyword rules only")
         return None
 
 
 @lru_cache(maxsize=1)
 def _get_anchor_embeddings():
-    import numpy as np
     model = _load_model()
     if model is None:
         return None, None
@@ -236,7 +235,7 @@ def _call_llm(batch: list[dict], api_key: str, model: str) -> dict:
                     _llm_backoff(attempt, retry_after)
                 continue
             if response.status_code == 400:
-                print(f"  [llm-tags] Bad request (400) — skipping batch.")
+                print("  [llm-tags] Bad request (400) — skipping batch.")
                 return {"results": []}
             response.raise_for_status()
             content = response.json()["choices"][0]["message"].get("content")

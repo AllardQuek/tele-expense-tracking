@@ -165,7 +165,7 @@ def debug_pdf(pdf_path: Path, page_indices: list[int] | None, text_only: bool, w
                 # Dump all words sorted by y then x — reveals text pdfplumber missed in tables
                 words = page.extract_words()
                 words_sorted = sorted(words, key=lambda w: (round(w['top'], 0), w['x0']))
-                emit(f"\n  Raw words on page (top→bottom, left→right):")
+                emit("\n  Raw words on page (top→bottom, left→right):")
                 current_y = None
                 line_buf = []
                 for w in words_sorted:

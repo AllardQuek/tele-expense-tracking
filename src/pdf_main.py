@@ -26,9 +26,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import json
-from pathlib import Path
-
 from parse_pdf import filter_by_date, parse_pdf
 from normalize_merchant import normalize_merchant
 from tag_merchant import tag_merchant, llm_tag_untagged
@@ -100,7 +97,7 @@ def run_pdf_pipeline(
         bounds = f"{from_date or '...'} → {to_date or '...'}"
         print(f"\n[2/4] Date filter ({bounds}): {len(filtered_rows)}/{len(raw_rows)} rows kept")
     else:
-        print(f"\n[2/4] Date filter: skipped (no --from/--to specified)")
+        print("\n[2/4] Date filter: skipped (no --from/--to specified)")
 
     if not filtered_rows:
         print("\nNo rows after filtering. Check your --from/--to range.")
@@ -185,11 +182,11 @@ def run_pdf_pipeline(
     if untagged:
         print(f"      {len(untagged)} untagged → {untagged_path}")
         if use_llm_tags:
-            print(f"      These rows could not be classified even by the LLM — likely opaque merchant codes.")
+            print("      These rows could not be classified even by the LLM — likely opaque merchant codes.")
         else:
-            print(f"      Re-run with --llm-tags to attempt LLM classification, or add keywords to config/merchant_rules.json.")
+            print("      Re-run with --llm-tags to attempt LLM classification, or add keywords to config/merchant_rules.json.")
     else:
-        print(f"      0 untagged rows (all transactions classified)")
+        print("      0 untagged rows (all transactions classified)")
 
     print("\n" + "=" * 60)
     print("Done.")
