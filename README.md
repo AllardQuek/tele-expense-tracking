@@ -1,6 +1,6 @@
-# tele-expense-tracking
+# expense-extraction
 
-Extracts expenses from a Telegram channel export and outputs a CSV ready for manual import into Notion.
+Automates expense extraction from two sources: Telegram channel exports (via LLM analysis) and PDF credit card statements (YouTrip / UOB). Outputs standardized CSV format ready for import into Notion or any expense tracker.
 
 **Telegram pipeline:** Telegram JSON export → candidate filter → LLM extraction (OpenRouter) → validation → `expenses_telegram_DDMMYY.csv`
 
@@ -13,7 +13,7 @@ Extracts expenses from a Telegram channel export and outputs a CSV ready for man
 ```bash
 # Clone and enter the project
 git clone <repo-url>
-cd tele-expense-tracking
+cd expense-extraction
 
 # Create and activate virtual environment
 python3 -m venv .venv
@@ -158,7 +158,7 @@ The recommended workflow is: keyword + semantic first (free, offline, instant), 
 ## Project structure
 
 ```
-tele-expense-tracking/
+expense-extraction/
 │
 ├── src/
 │   ├── main.py                   # Telegram pipeline entry point
