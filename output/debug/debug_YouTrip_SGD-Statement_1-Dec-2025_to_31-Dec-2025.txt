@@ -1,5 +1,5 @@
 PDF: YouTrip_SGD-Statement_1-Dec-2025_to_31-Dec-2025.pdf  (11 total pages)
-Inspecting pages: [1, 2, 3]
+Inspecting pages: [1]
 ======================================================================
 
 ── Page 1 ──  (4 table(s) detected by pdfplumber)
@@ -22,43 +22,5 @@ Inspecting pages: [1, 2, 3]
     Block  7: y= 581.8– 631.9  5 Dec 2025  $0.94  Grab*
     Block  8: y= 647.0– 793.5  5 Dec 2025  $5.50  SmartExchange™
   → image: output/debug/debug_page01.png
-
-── Page 2 ──  (3 table(s) detected by pdfplumber)
-  Table 0:  1 row(s) × 7 col(s)
-    Row 0: ['', '7 Dec 2025\n4:33 AM', 'Grab*\nA-8MONB45GX56AAV,PH,PHNOM PEN\n(៛3,200.00 KHR)\nFX rate: $1 SGD = ៛3076.92 KHR', '$1.04', '', '$116.94', '']
-  Table 1:  1 row(s) × 7 col(s)
-    Row 0: ['', '7 Dec 2025\n4:33 AM', 'Grab*\nA-8MP4OHQGX56AAV,PH,PHNOM PEN\n(៛4,200.00 KHR)\nFX rate: $1 SGD = ៛3088.24 KHR', '$1.36', '', '$114.25', '']
-  Table 2:  1 row(s) × 7 col(s)
-    Row 0: ['', '7 Dec 2025\n4:33 AM', 'Grab*\nA-8MP25EQGXFANAV,PH,PHNOM PEN\n(៛3,900.00 KHR)\nFX rate: $1 SGD = ៛3070.87 KHR', '$1.27', '', '$108.78', '']
-
-  Word-based blocks detected: 7
-    Block  1: y= 268.6– 318.7  7 Dec 2025  $1.69  Grab*
-    Block  2: y= 333.8– 383.9  7 Dec 2025  $1.04  Grab*
-    Block  3: y= 399.0– 449.1  7 Dec 2025  $1.33  Grab*
-    Block  4: y= 464.2– 514.3  7 Dec 2025  $1.36  Grab*
-    Block  5: y= 529.4– 579.4  7 Dec 2025  $4.20  Grab*
-    Block  6: y= 594.5– 644.6  7 Dec 2025  $1.27  Grab*
-    Block  7: y= 659.8– 792.0  7 Dec 2025  $2.43  Grab*
-  → image: output/debug/debug_page02.png
-
-── Page 3 ──  (4 table(s) detected by pdfplumber)
-  Table 0:  1 row(s) × 7 col(s)
-    Row 0: ['', '8 Dec 2025\n12:21 AM', 'SmartExchange™\n$7.93 SGD to $6.10 USD\nFX rate: $1 SGD = $0.76923 USD', '$7.93', '', '$98.42', '']
-  Table 1:  1 row(s) × 7 col(s)
-    Row 0: ['', '8 Dec 2025\n10:13 AM', 'Grab*\nA-8MS8NWPGX7KJAV,PH,PHNOM PEN\n(៛3,200.00 KHR)\nFX rate: $1 SGD = ៛3076.92 KHR', '$1.04', '', '$95.17', '']
-  Table 2:  1 row(s) × 7 col(s)
-    Row 0: ['', '8 Dec 2025\n10:13 AM', 'Grab*\nA-8MS3OWUWW6TAAV,PH,PHNOM\nPEN (៛10,100.00 KHR)\nFX rate: $1 SGD = ៛3079.27 KHR', '$3.28', '', '$86.05', '']
-  Table 3:  1 row(s) × 7 col(s)
-    Row 0: ['', '8 Dec 2025\n6:41 PM', 'SmartExchange™\n$5.51 SGD to $4.25 USD\nFX rate: $1 SGD = $0.771324 USD', '$5.51', '', '$75.51', '']
-
-  Word-based blocks detected: 7
-    Block  1: y= 268.6– 304.5  8 Dec 2025  $7.93  SmartExchange™
-    Block  2: y= 319.6– 369.7  8 Dec 2025  $2.21  Grab*
-    Block  3: y= 384.8– 434.9  8 Dec 2025  $1.04  Grab*
-    Block  4: y= 450.0– 500.1  8 Dec 2025  $5.84  Grab*
-    Block  5: y= 515.2– 565.3  8 Dec 2025  $3.28  Grab*
-    Block  6: y= 580.4– 630.5  8 Dec 2025  $5.03  Grab*
-    Block  7: y= 645.6– 792.0  8 Dec 2025  $5.51  SmartExchange™
-  → image: output/debug/debug_page03.png
 
 ======================================================================

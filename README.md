@@ -103,6 +103,33 @@ python src/pdf_main.py --input data/uob_may2026.pdf --llm-tags
    - **Pass 2 – Semantic similarity**: embeds the merchant name with `paraphrase-MiniLM-L6-v2` and compares against per-tag anchor phrases via cosine similarity. Catches English-meaning words with no keyword rule (e.g. `"buffet"` → food, `"tram"` → transport, `"clinic"` → essentials). First run triggers a one-time ~80 MB model download.
    - **Pass 3 – LLM** *(optional, `--llm-tags`)*: sends still-untagged rows to OpenRouter. Best for non-English merchant names with contextual clues. Rows that remain untagged after all passes are written to `pdf_untagged_<type>_MMYYYY.json`.
 
+**How the YouTrip parser handles missing rows:**
+
+YouTrip PDFs use a striped table: every other row has a grey background, alternating with
+white rows. `pdfplumber`'s table detector works from the PDF vector layer (fill regions and
+border lines) — white rows have no fill and share borders with their neighbours, making
+them invisible to `extract_tables()`.
+
+**pdfplumber table detection — 4 of 7 rows detected (blue boxes):**
+
+![pdfplumber table detection on page 1](docs/assets/debug_page01_tables.png)
+
+Three transactions are completely missing (the `3 Dec $17.82`, `5 Dec $2.57` and
+`5 Dec $0.94` white rows between the detected blue boxes).
+
+**Word-based extraction — all 7 rows detected (green boxes):**
+
+![Word-based block detection on page 1](docs/assets/debug_page01_blocks.png)
+
+Switching to `page.extract_words()` reads every word regardless of background fill.
+Transaction blocks are identified by the date pattern (`\d{1,2} Mon YYYY`) in the
+left-hand column, and all 7 transactions on the page are now found.
+
+> Run `python src/debug_pdf.py --input <pdf> --pages 1 --blocks` to generate the green
+> overlay for any statement. Use `--words` to dump raw word positions if columns shift.
+
+---
+
 **Improving tag coverage:**
 
 After the first run, check `output/pdf_untagged_*.json`. It lists every transaction that matched no keyword. Add new keywords to `config/merchant_rules.json` under the appropriate tag and re-run:
