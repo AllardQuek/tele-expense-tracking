@@ -1,292 +1,312 @@
-Yes — here’s the **clean implementation plan** with only the Hermes-specific details that matter.
-
 ## Architecture
 
-Use **both**:
-- an `expenses` Hermes **profile**
-- an `expense-tracker` **plugin**
+Use:
+- one Hermes **profile** named `expense-tracker`
+- one Hermes **plugin** also named `expense-tracker`. 
 
-Why:
-- The **profile** isolates bot token, config, sessions, memory, and state.
-- The **plugin** adds your custom slash commands like `/set-tracker`, `/set-currency`, `/set-city`, and `/x` using Hermes’ plugin command registration. 
-
-So the design is:
-
-- `expenses` profile = the expense bot environment. 
-- `expense-tracker` plugin = the expense bot behavior. 
-
-## Core decisions
-
-Keep these product decisions as-is:
-
-- Separate CSV per tracker.
-- Columns:
-  - `date`
-  - `city`
-  - `name`
-  - `tags`
-  - `amount`
-  - `currency`
-  - `amount_sgd` optional
-- One primary amount + currency, with optional normalized SGD value.
-- Tracker-specific defaults for city and currency.
+The profile isolates bot token, config, sessions, memory, and gateway state, while the plugin implements `/set-tracker`, `/set-currency`, `/set-city`, `/x`, and any helper logic. 
 
 ## Milestone 1
 
-Set up the dedicated Hermes profile.
+Assuming this is already done, the `expense-tracker` profile exists and can run its own chat/gateway independently of your default profile. 
 
-### Deliverables
-- Create an `expenses` profile.
-- Configure its own `.env`, `config.yaml`, and `SOUL.md`.
-- Configure the Telegram bot token in that profile.
-- Optionally set `terminal.cwd` to your expense project folder if you want predictable tool execution. 
+### Tasks
+- Confirm profile exists.
+- Confirm Telegram bot token is configured.
+- Confirm the profile can start its own gateway. 
 
-### Acceptance criteria
-- You can run:
-  - `expenses chat`
-  - `expenses gateway start`
-- The Telegram bot connects through the `expenses` profile.
-- It is isolated from your default Hermes setup. 
+### Files
+- `~/.hermes/profiles/expense-tracker/config.yaml`
+- `~/.hermes/profiles/expense-tracker/.env`
+- `~/.hermes/profiles/expense-tracker/SOUL.md`
 
-### Useful Hermes detail
-Profiles are separate Hermes homes, so each one gets its own config, API keys, memory, sessions, and gateway state. 
+### Done criteria
+- `expense-tracker chat` works. 
+- `expense-tracker gateway start` works. 
+- The bot is isolated from other Hermes profiles. 
 
 ## Milestone 2
 
-Create the plugin skeleton.
+Create the plugin skeleton and enable it only for the `expense-tracker` profile. 
 
-### Deliverables
-Create a plugin folder like:
-
+### Tasks
+- Create plugin folder:
 ```text
 ~/.hermes/plugins/expense-tracker/
-  plugin.yaml
-  __init__.py
 ```
+- Add:
+```text
+plugin.yaml
+__init__.py
+```
+- In `plugin.yaml`, define:
+  - plugin name
+  - version
+  - description. 
+- In `__init__.py`, add `register(ctx)`.
+- Register placeholder slash commands with `ctx.register_command(...)`:
+  - `set-tracker`
+  - `set-currency`
+  - `set-city`
+  - `x`. 
+- Enable the plugin in the `expense-tracker` profile config under `plugins.enabled`. 
 
-`plugin.yaml`
-- name
-- version
-- description
+### Files
+- `~/.hermes/plugins/expense-tracker/plugin.yaml`
+- `~/.hermes/plugins/expense-tracker/__init__.py`
+- `~/.hermes/profiles/expense-tracker/config.yaml`
 
-`__init__.py`
-- `register(ctx)` function
-- registers slash commands via `ctx.register_command(...)`. 
-
-### Acceptance criteria
-- Hermes discovers the plugin.
-- You enable it in the `expenses` profile config.
-- `/plugins` or plugin listing shows it loaded. 
-
-### Useful Hermes detail
-Plugins are **opt-in**. Discovery alone is not enough; you must enable the plugin in `plugins.enabled`. 
+### Done criteria
+- Hermes discovers the plugin. 
+- The plugin is enabled only in `expense-tracker`. 
+- `/set-tracker`, `/set-currency`, `/set-city`, and `/x` are recognized, even if they only return placeholder responses. 
 
 ## Milestone 3
 
-Implement tracker state and persistence.
+Implement persistent tracker state under the `expense-tracker` profile home so command behavior survives restarts. 
 
-### Deliverables
-Store state under the `expenses` profile directory, not in some global hardcoded path.
-
-Suggested files:
-
+### Tasks
+- Create a profile-local data directory:
 ```text
-<profile-home>/
-  expense-data/
-    trackers.yaml
-    output/
-      Japan-2026.csv
-      Daily-2026.csv
+~/.hermes/profiles/expense-tracker/expense-data/
 ```
-
-`trackers.yaml` should store:
-- active tracker
-- each tracker’s CSV path
-- default currency
-- default city
-
-Example shape:
-
-```yaml
-active_tracker: Japan-2026
-
-trackers:
-  Japan-2026:
-    csv_path: expense-data/output/Japan-2026.csv
-    default_currency: JPY
-    default_city: Tokyo
-  Daily-2026:
-    csv_path: expense-data/output/Daily-2026.csv
-    default_currency: SGD
-    default_city: ""
+- Add:
+```text
+trackers.yaml
+output/
 ```
+- Store:
+  - active tracker
+  - tracker CSV path
+  - default currency
+  - default city.
+- Write helper functions:
+  - load state
+  - save state
+  - create tracker if missing
+  - set active tracker
+  - update tracker defaults
 
-### Commands to implement first
-- `/set-tracker <name>`
-- `/set-currency <code>`
-- `/set-city <name>`
+### Behavior decisions
+- Only **one** tracker is active at a time.
+- `/set-tracker <name>`:
+  - creates the tracker if missing,
+  - activates it immediately,
+  - is idempotent if the tracker already exists.
 
-### Acceptance criteria
-- `/set-tracker Japan-2026` creates or selects the tracker.
+### Files
+- `~/.hermes/plugins/expense-tracker/state.py`
+- `~/.hermes/profiles/expense-tracker/expense-data/trackers.yaml`
+
+### Done criteria
+- `/set-tracker Japan-2026` creates or selects a tracker.
 - `/set-currency JPY` persists.
 - `/set-city Tokyo` persists.
-- Restarting the gateway keeps the state.
-
-### Useful Hermes detail
-Hermes profiles scope state using `HERMES_HOME`, so your plugin should store files relative to the active profile home, not a fixed `~/.hermes` path. 
+- Restarting the gateway keeps the same state. 
 
 ## Milestone 4
 
-Implement CSV creation and writing.
+Implement CSV creation and append logic using the final schema.
 
-### Deliverables
-When a tracker is first created:
-- create the CSV if it does not exist
-- write header row
-
-CSV header:
+### Schema
+Use this exact header:
 
 ```csv
-date,city,name,tags,amount,currency,amount_sgd
+name,tags,cost,currency,cost_sgd,city
 ```
 
-Implement a small CSV writer module that:
-- ensures file exists
-- appends one validated row
-- preserves column order
+### Tasks
+- Write a CSV writer module that:
+  - creates the file if missing,
+  - writes headers once,
+  - appends rows in the same order,
+  - allows blank optional fields.
+- Create one CSV file per tracker under:
+```text
+~/.hermes/profiles/expense-tracker/expense-data/output/
+```
 
-### Acceptance criteria
-- New tracker creates a correctly structured CSV.
-- Later writes append rows cleanly.
-- Empty optional fields are allowed, especially `amount_sgd`.
+### Files
+- `~/.hermes/plugins/expense-tracker/csv_writer.py`
+
+### Done criteria
+- New tracker creation also creates a valid CSV file.
+- Appending a row works reliably.
+- No duplicate header rows appear.
 
 ## Milestone 5
 
-Implement `/x` v1 logging.
+Implement `/set-tracker`, `/set-currency`, and `/set-city` properly.
 
-### Scope
-Make `/x` a simple deterministic logger first.
+### Tasks
+- Replace placeholder handlers with real ones.
+- Validate arguments:
+  - tracker name not empty
+  - currency normalized to uppercase
+  - city stored as free text
+- Return short confirmation messages:
+  - active tracker set
+  - default currency set
+  - default city set
 
-Examples:
-- `/x 12 coffee`
-- `/x 1200 jpy ramen`
-- `/x 18.5 taxi`
-- `/x 30 lunch #food #friends`
+### Files
+- `~/.hermes/plugins/expense-tracker/commands.py`
+- `~/.hermes/plugins/expense-tracker/__init__.py`
 
-### v1 parsing rules
-Extract:
-- `amount`
-- optional explicit `currency`
-- `name`
-- optional tags
-- city from active tracker default unless explicitly overridden later
-
-Suggested behavior:
-- If currency omitted, use tracker default.
-- If city omitted, use tracker default.
-- If no tracker is active, return an error.
-- If parsing fails, return a clear correction message.
-
-### Acceptance criteria
-- `/x 12 coffee` writes one row using active defaults.
-- `/x 1200 jpy ramen` overrides currency correctly.
-- `/x` with no active tracker does not write anything.
-- Rows are valid and consistent.
+### Done criteria
+- All three commands update saved state.
+- Replies are clear and deterministic.
+- State changes are visible immediately.
 
 ## Milestone 6
 
-Add usability commands.
+Implement `/x` v1 as a deterministic expense logger using **dashes for fields** and **commas inside tags**.
 
-### Deliverables
-Add:
-- `/show-context`
-- maybe `/list-trackers`
+### CSV mapping
+Rows map to:
 
-`/show-context` should display:
-- active tracker
-- CSV file
-- default currency
-- default city
+- `name`
+- `tags`
+- `cost`
+- `currency`
+- `cost_sgd`
+- `city`.
 
-### Acceptance criteria
-- You can inspect current state quickly before logging.
-- It is easy to tell where `/x` will write.
+### Input rules
+Canonical forms:
+
+- `/x cost - name`
+- `/x cost - currency - name`
+- `/x cost - currency - name - tags`
+- `/x cost - currency - name - tags - city`
+- `/x cost - currency - name - city` (no tags, explicit city)
+
+Rules:
+- `cost` is required.
+- `currency` is optional; if omitted, use active tracker default.
+- `name` is required.
+- `tags` are optional.
+- `city` is optional; if omitted, use tracker default city, and if no default exists, leave blank.
+- Tags are a comma-separated list inside one field, e.g. `food,friends,work`.
+- `cost_sgd` stays blank in v1 unless you explicitly add conversion later.
+
+### Disambiguation rule
+When there is one trailing field after `name`:
+- if it contains a comma, treat it as `tags`
+- otherwise treat it as `city`
+
+Examples:
+- `/x 12 - coffee`
+- `/x 1200 - JPY - ramen`
+- `/x 30 - SGD - lunch - food,friends,work`
+- `/x 25 - SGD - museum ticket - Tokyo`
+- `/x 18.5 - SGD - taxi - transport,airport - Singapore`.
+
+### Tasks
+- Write a deterministic parser for this format.
+- Use tracker defaults for missing currency/city.
+- Validate cost parsing.
+- Append parsed row to the active tracker CSV.
+
+### Files
+- `~/.hermes/plugins/expense-tracker/parser.py`
+- `~/.hermes/plugins/expense-tracker/commands.py`
+
+### Done criteria
+- `/x 12 - coffee` writes a valid row.
+- `/x 1200 - JPY - ramen` overrides default currency.
+- `/x 30 - SGD - lunch - food,friends,work` stores tags.
+- `/x 25 - SGD - museum ticket - Tokyo` stores city without requiring tags.
+- If no active tracker exists, `/x` returns a clear error and writes nothing.
 
 ## Milestone 7
 
-Add `amount_sgd` support.
+Add context inspection commands for easier daily use.
 
-### Options
-You have 3 reasonable choices:
+### Tasks
+- Add `/show-context`
+- Optionally add `/list-trackers`
 
-1. Leave `amount_sgd` blank in v1.
-2. Allow manual entry later.
-3. Add exchange-rate lookup in a later phase.
+`/show-context` should return:
+- active tracker
+- CSV path
+- default currency
+- default city
 
-### Recommendation
-For v1:
-- keep the column
-- allow it to be blank
-- do not block logging if SGD conversion is unavailable
+### Files
+- `~/.hermes/plugins/expense-tracker/commands.py`
 
-Later, add:
-- a backfill script
-- or on-write conversion
-
-### Acceptance criteria
-- Rows can be summed later by `amount_sgd` when populated.
-- Original amount and currency are always preserved.
+### Done criteria
+- You can see exactly where `/x` will write.
+- You can confirm default currency/city before logging.
 
 ## Milestone 8
 
-Add safety and quality controls.
+Add `cost_sgd` support without blocking logging.
 
-### Deliverables
-- duplicate protection
-- validation
-- better error messages
+### Decisions
+For v1:
+- keep `cost_sgd` in the schema,
+- leave it blank by default,
+- do not add FX API dependency yet.
 
-Possible duplicate keys:
-- Telegram message ID
-- or a hash of message text + timestamp + tracker
+Later options:
+- exchange-rate lookup on write,
+- backfill script for historical rows,
+- manual normalization workflow.
 
-If you want this later, add a hidden metadata column or sidecar state file.
+### Files
+- `~/.hermes/plugins/expense-tracker/parser.py`
+- `~/.hermes/plugins/expense-tracker/commands.py`
+- optional future conversion module
 
-### Acceptance criteria
-- Replaying the same message does not silently create duplicates.
-- Invalid currency or malformed amount gives a useful error.
-- Bad input fails safely.
+### Done criteria
+- Logging works even when SGD conversion is unavailable.
+- Original `cost` and `currency` are always preserved.
 
 ## Milestone 9
 
-Optional smarter parsing
+Add guardrails and cleanup.
 
-Only after v1 is stable.
+### Tasks
+- Add input validation for bad costs/currencies.
+- Improve error messages.
+- Add basic duplicate protection.
+- Decide whether to track source message metadata.
 
-### Possible upgrades
-- infer tags automatically
-- city override in free text
-- vendor normalization
-- smarter splitting of compound entries
-- LLM-assisted parsing for messy messages
+Suggested v1 error behavior:
+- No active tracker:
+  - return: `No active tracker. Run /set-tracker <name> first.`
+- Invalid cost:
+  - return a clear format hint
+- Existing tracker on `/set-tracker`:
+  - do not error; just activate it
 
-### Recommendation
-Do **not** start here. Get deterministic `/x` working first.
+Possible duplicate strategy:
+- save Telegram message ID in sidecar state, or
+- hash tracker + message text + timestamp
 
-## Suggested file structure
+### Files
+- `~/.hermes/plugins/expense-tracker/state.py`
+- `~/.hermes/plugins/expense-tracker/commands.py`
 
-A practical layout:
+### Done criteria
+- Repeated messages do not silently duplicate.
+- Bad input fails with a useful correction message.
+- The system is stable enough for daily use.
+
+## File layout
 
 ```text
 ~/.hermes/plugins/expense-tracker/
   plugin.yaml
   __init__.py
-  state.py
-  csv_writer.py
-  parser.py
   commands.py
+  state.py
+  parser.py
+  csv_writer.py
 
-<expenses-profile-home>/
+~/.hermes/profiles/expense-tracker/
   config.yaml
   .env
   SOUL.md
@@ -297,31 +317,42 @@ A practical layout:
       Daily-2026.csv
 ```
 
-## Recommended build order
+## Build order
 
-Build in this order:
+1. Milestone 2: plugin skeleton  
+2. Milestone 3: persistent tracker state  
+3. Milestone 4: CSV writer  
+4. Milestone 5: tracker-setting commands  
+5. Milestone 6: `/x` logger  
+6. Milestone 7: context commands  
+7. Milestone 8: `cost_sgd`  
+8. Milestone 9: guardrails  
 
-1. Create `expenses` profile.
-2. Create and enable `expense-tracker` plugin.
-3. Implement tracker state.
-4. Implement CSV creation/writer.
-5. Implement `/set-tracker`, `/set-currency`, `/set-city`.
-6. Implement `/x` v1.
-7. Add `/show-context`.
-8. Add `amount_sgd` handling.
-9. Add duplicate protection and smarter parsing.
+## v1 success definition
 
-## Minimal success definition
+You have a solid v1 once this works end to end:
 
-You have a good v1 when all of these work:
+1. `/set-tracker Japan-2026`
+2. `/set-currency JPY`
+3. `/set-city Tokyo`
+4. `/x 1200 - ramen`
+5. A row appears in `Japan-2026.csv` like:
 
-- Telegram bot runs inside `expenses`.
-- Plugin loads in that profile.
-- `/set-tracker Japan-2026`
-- `/set-currency JPY`
-- `/set-city Tokyo`
-- `/x 1200 ramen`
-- one correct row gets appended to `Japan-2026.csv`
+```csv
+ramen,,1200,JPY,,Tokyo
+```
+
+and this works too:
+
+```text
+/x 18.5 - SGD - taxi - transport,airport - Singapore
+```
+
+which should yield:
+
+```csv
+taxi,"transport,airport",18.5,SGD,,Singapore
+```
 
 ## Hermes-specific implementation notes
 
