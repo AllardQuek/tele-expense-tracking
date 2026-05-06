@@ -1,6 +1,4 @@
-Great — then the next move is to rewrite the milestone spec around `/expense` with hashtag tags and a deterministic parser. Hermes slash commands are registered as `ctx.register_command(name, handler, description)` and the handler receives the raw argument string, so defining a crisp grammar before coding is the right approach. 
-
-## Updated milestone
+## Updated milestone 5
 
 I’d update it to:
 
